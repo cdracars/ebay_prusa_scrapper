@@ -1,0 +1,23 @@
+[project]
+name = "ebay_prusa_scrapper"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "Cody Dracars", email = "cdracars@gmail.com"},
+    {name = "Cody Dracars", email = "codydracars@cfsbrands.com"},
+]
+dependencies = [
+    "requests>=2.32.3",
+    "beautifulsoup4>=4.13.3",
+]
+requires-python = ">=3.9"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = true
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
