@@ -1,0 +1,46 @@
+# .github/workflows/daily-scrape.yml
+name: Daily eBay Scrape
+
+on:
+  schedule:
+    - cron: "0 2 * * *" # 9PM CST / 10PM EST
+  workflow_dispatch: # Manual trigger for testing
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: Install PDM
+        run: |
+          curl -sSL https://pdm.fming.dev/install-pdm.py | python3 -
+
+      - name: Install dependencies
+        run: |
+          pdm install
+
+      - name: Ensure directories exist
+        run: |
+          mkdir -p public/data/current
+          mkdir -p public/data/historical
+
+      - name: Run scraper
+        run: |
+          pdm run python -m src.ebay_prusa_scrapper.main
+
+      - name: Commit results
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add public/data/current/listings.json
+          git add public/data/historical
+          git add public/data/metadata.json
+          git commit -m "Update scraping results [skip ci]" || exit 0
+          git push
