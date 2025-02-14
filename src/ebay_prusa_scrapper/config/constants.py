@@ -2,18 +2,18 @@
 
 # Official prices
 OFFICIAL_PRICES = {
-    "MK3S": 799.0,  # kit price
-    "MK4": 799.0,   # kit price (fully assembled is often ~1099)
-    "MINI": 379.0,  # kit price
-    "CORE": 399.0   # Core One price
+    "MK3S": 500.0,  # kit price
+    "MK4": 729.0,   # kit price (fully assembled is often ~1099)
+    "MINI": 429.0,  # kit price
+    "CORE": 949.0   # Core One price
 }
 
 # Price validation thresholds
 PRICE_THRESHOLDS = {
-    "MK3S": (400, 1200),   # Kit $799, Assembled $1099
-    "MK4": (500, 1300),    # Kit $799, Assembled $1099
-    "MINI": (250, 500),    # Kit $379, Assembled $459
-    "CORE": (300, 500)     # $399 standard price
+    "MK3S": (400, 1200),   # Kit $500, Assembled $1099
+    "MK4": (500, 1300),    # Kit $729, Assembled $1099
+    "MINI": (250, 600),    # Kit $429, Assembled $459
+    "CORE": (740, 1300)     # $949 standard price, Assembled $1199
 }
 
 # Keywords for classification

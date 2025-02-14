@@ -19,6 +19,8 @@ class Listing:
     link: str
     category: str
     model: str
+    auction_type: str = "Buy It Now"  # Default to Buy It Now, with options like "Auction", "Hybrid"
+
 
     @classmethod
     def from_dict(cls, data: dict) -> 'Listing':
@@ -39,7 +41,8 @@ class Listing:
             "rating_percent": self.rating_percent,
             "link": self.link,
             "category": self.category,
-            "model": self.model
+            "model": self.model,
+            "auction_type": self.auction_type
         }
 
     def calculate_price_comparison(self) -> None:

@@ -1,0 +1,68 @@
+{
+  "timestamp": "2025-02-13 17:37:50",
+  "total_listings": 454,
+  "models": {
+    "MK3S": {
+      "count": 86,
+      "price_range": {
+        "min": 449.99,
+        "max": 1181.67
+      },
+      "below_msrp": 40,
+      "listings_with_shipping": 77
+    },
+    "MK4": {
+      "count": 7,
+      "price_range": {
+        "min": 617.02,
+        "max": 848.95
+      },
+      "below_msrp": 3,
+      "listings_with_shipping": 7
+    },
+    "MINI": {
+      "count": 30,
+      "price_range": {
+        "min": 282.8,
+        "max": 458.5
+      },
+      "below_msrp": 9,
+      "listings_with_shipping": 21
+    },
+    "CORE": {
+      "count": 0,
+      "price_range": null,
+      "below_msrp": 0,
+      "listings_with_shipping": 0
+    },
+    "Unknown": {
+      "count": 37
+    }
+  },
+  "categories": {
+    "printer": {
+      "count": 160,
+      "avg_price": 516.95,
+      "listings_with_shipping": 139,
+      "listings_below_msrp": 52
+    },
+    "upgrade": {
+      "count": 294,
+      "popular_types": {
+        "hotend": 35,
+        "extruder": 31,
+        "sheet": 31,
+        "nozzle": 29,
+        "frame": 8,
+        "bondtech": 5,
+        "bear": 3,
+        "pinda": 3
+      },
+      "avg_price": 63.65,
+      "price_range": {
+        "min": 1.04,
+        "max": 300.0
+      }
+    }
+  }
+}

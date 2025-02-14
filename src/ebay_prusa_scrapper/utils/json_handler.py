@@ -1,15 +1,15 @@
-
+# src/ebay_prusa_scrapper/utils/json_handler.py
 """JSON handling utilities"""
 import json
 from typing import List, Dict, Any
 from datetime import datetime
 
-from ebay_prusa_scrapper.scraper.classifier import is_valid_price_for_model
-from config.constants import OFFICIAL_PRICES, UPGRADE_MAX_PRICE
-from models.listing import Listing
+from ..config.constants import OFFICIAL_PRICES, UPGRADE_MAX_PRICE
+from ..models.listing import Listing
+from ..models.types import ModelStats, UnknownModelStats
 
-def create_model_info() -> Dict[str, Any]:
-    """Create a fresh model info dictionary with proper initialization"""
+def create_model_stats() -> ModelStats:
+    """Create model statistics with proper initialization"""
     return {
         "count": 0,
         "price_range": {
@@ -25,25 +25,8 @@ def write_batch_to_file(batch: List[Dict[str, Any]], filename: str, is_first: bo
     mode = 'w' if is_first else 'a'
     with open(filename, mode, encoding='utf-8') as f:
         if is_first:
-            # Write header with proper JSON formatting
-            instructions = {
-                "instructions": {
-                    "summary": "Group by category (printer/upgrade) and analyze pricing vs MSRP",
-                    "key_metrics": [
-                        "Compare total_cost (price + shipping) to official_price",
-                        "Flag listings below MSRP",
-                        "Note any missing shipping costs"
-                    ],
-                    "models": {
-                        "MK3S": "Original i3 MK3S/+ ($799 MSRP)",
-                        "MK4": "Next-gen i3 MK4 ($799 MSRP)",
-                        "MINI": "MINI/+ ($379 MSRP)",
-                        "CORE": "Core One ($399 MSRP)"
-                    }
-                }
-            }
-            f.write(json.dumps(instructions, indent=2))
-            f.write(',\n"listings": [\n')
+            # Start the JSON array directly
+            f.write('{\n"listings": [\n')
 
         # Write batch with proper JSON formatting
         json_str = json.dumps(batch, indent=2)
@@ -53,17 +36,21 @@ def write_batch_to_file(batch: List[Dict[str, Any]], filename: str, is_first: bo
         json_str = json_str[1:-1].strip()
         f.write(json_str)
 
+def create_unknown_stats() -> UnknownModelStats:
+    """Create statistics for unknown model"""
+    return {"count": 0}
+
 def create_summary_json(listings: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Create a condensed summary with improved accuracy"""
     summary = {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "total_listings": len(listings),
         "models": {
-            "MK3S": create_model_info(),
-            "MK4": create_model_info(),
-            "MINI": create_model_info(),
-            "CORE": create_model_info(),
-            "Unknown": {"count": 0}  # Unknown model doesn't track prices
+            "MK3S": create_model_stats(),
+            "MK4": create_model_stats(),
+            "MINI": create_model_stats(),
+            "CORE": create_model_stats(),
+            "Unknown": create_unknown_stats()
         },
         "categories": {
             "printer": {
@@ -81,6 +68,12 @@ def create_summary_json(listings: List[Dict[str, Any]]) -> Dict[str, Any]:
                     "max": float('-inf')
                 }
             }
+        },
+        # New section for auction type tracking
+        "auction_types": {
+            "Buy It Now": 0,
+            "Auction": 0,
+            "Hybrid": 0
         }
     }
 
@@ -96,6 +89,9 @@ def create_summary_json(listings: List[Dict[str, Any]]) -> Dict[str, Any]:
         price = listing.price
         total_cost = listing.total_cost
 
+        auction_type = listing_dict.get('auction_type', 'Buy It Now')
+        summary["auction_types"][auction_type] += 1
+
         if category == "printer":
             summary["categories"]["printer"]["count"] += 1
 
@@ -107,16 +103,18 @@ def create_summary_json(listings: List[Dict[str, Any]]) -> Dict[str, Any]:
             if listing.has_shipping_info():
                 summary["categories"]["printer"]["listings_with_shipping"] += 1
 
-            if model in summary["models"]:
-                model_info = summary["models"][model]
+            model_info = summary["models"][model]
+            if model != "Unknown":
                 model_info["count"] += 1
+                model_info = model_info  # type: ModelStats  # Tell mypy this is ModelStats
 
                 # Track shipping at model level
-                Listing.track_model_shipping(model_info, listing_dict)
+                if listing.has_shipping_info():
+                    model_info["listings_with_shipping"] += 1
 
                 # Only update price range if total cost is valid for the model
                 if isinstance(total_cost, (int, float)) and total_cost > 0:
-                    if model != "Unknown" and listing.is_valid_price():
+                    if listing.is_valid_price():
                         model_info["price_range"]["min"] = min(model_info["price_range"]["min"], total_cost)
                         model_info["price_range"]["max"] = max(model_info["price_range"]["max"], total_cost)
 
@@ -126,6 +124,9 @@ def create_summary_json(listings: List[Dict[str, Any]]) -> Dict[str, Any]:
                     listing.is_valid_price()):
                     model_info["below_msrp"] += 1
                     summary["categories"]["printer"]["listings_below_msrp"] += 1
+            else:
+                # Handle Unknown model case
+                model_info["count"] += 1  # type: UnknownModelStats
 
         else:  # upgrade
             summary["categories"]["upgrade"]["count"] += 1
@@ -161,9 +162,10 @@ def create_summary_json(listings: List[Dict[str, Any]]) -> Dict[str, Any]:
 
     # Clean up price ranges that have no data
     for model in ["MK3S", "MK4", "MINI", "CORE"]:
-        price_range = summary["models"][model]["price_range"]
+        model_info = summary["models"][model]  # type: ModelStats
+        price_range = model_info["price_range"]
         if price_range["min"] == float('inf') or price_range["max"] == float('-inf'):
-            summary["models"][model]["price_range"] = None
+            model_info["price_range"] = None
 
     # Sort popular upgrade types by frequency
     if summary["categories"]["upgrade"]["popular_types"]:
