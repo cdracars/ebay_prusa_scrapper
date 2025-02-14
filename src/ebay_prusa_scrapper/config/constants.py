@@ -10,7 +10,7 @@ OFFICIAL_PRICES = {
 
 # Price validation thresholds
 PRICE_THRESHOLDS = {
-    "MK3S": (400, 1200),   # Kit $500, Assembled $1099
+    "MK3S": (400, 700),   # Kit $500, Assembled $1099
     "MK4": (500, 1300),    # Kit $729, Assembled $1099
     "MINI": (250, 600),    # Kit $429, Assembled $459
     "CORE": (740, 1300)     # $949 standard price, Assembled $1199
