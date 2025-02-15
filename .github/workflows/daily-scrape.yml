@@ -25,6 +25,10 @@ jobs:
           cache: true
           version: 2.22.3
 
+      - name: Install UV
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+
       - name: Enable UV and install dependencies
         run: |
           pdm config use_uv true
