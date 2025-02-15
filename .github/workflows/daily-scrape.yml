@@ -19,11 +19,15 @@ jobs:
           python-version: "3.9"
 
       - name: Install PDM
-        run: |
-          curl -sSL https://pdm.fming.dev/install-pdm.py | python3 -
+        uses: pdm-project/setup-pdm@v3
+        with:
+          python-version: "3.9"
+          cache: true
+          version: 2.12.3
 
-      - name: Install dependencies
+      - name: Enable UV and install dependencies
         run: |
+          pdm config use_uv true
           pdm install
 
       - name: Ensure directories exist
