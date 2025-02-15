@@ -33,7 +33,7 @@ jobs:
 
       - name: Run scraper
         run: |
-          pdm run python -m src.ebay_prusa_scrapper.main
+          .venv/bin/python src/ebay_prusa_scrapper/main.py
 
       - name: Commit results
         run: |
