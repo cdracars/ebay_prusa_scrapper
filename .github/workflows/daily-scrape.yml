@@ -23,7 +23,7 @@ jobs:
         with:
           python-version: "3.9"
           cache: true
-          version: 2.12.3
+          version: 2.22.3
 
       - name: Enable UV and install dependencies
         run: |
