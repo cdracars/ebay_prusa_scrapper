@@ -2,9 +2,10 @@
   "historical_files": {
     "2025": {
       "02": [
-        "historical/2025/02/listings_20250213.json"
+        "historical/2025/02/listings_20250213.json",
+        "historical/2025/02/listings_20250215.json"
       ]
     }
   },
-  "last_updated": "2025-02-13T19:34:06.093653"
+  "last_updated": "2025-02-15T16:05:43.143143"
 }
