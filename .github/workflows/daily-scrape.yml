@@ -52,3 +52,11 @@ jobs:
           git add public/data/metadata.json
           git commit -m "Update scraping results [skip ci]" || exit 0
           git push
+
+      - name: Trigger web app update
+        run: |
+          curl -X POST \
+          -H "Authorization: Bearer ${{ secrets.WEBAPP_PAT }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/cdracars/prusa-market-analysis/dispatches \
+          -d '{"event_type": "data-update"}'
