@@ -4,9 +4,10 @@
       "02": [
         "historical/2025/02/listings_20250213.json",
         "historical/2025/02/listings_20250215.json",
-        "historical/2025/02/listings_20250216.json"
+        "historical/2025/02/listings_20250216.json",
+        "historical/2025/02/listings_20250217.json"
       ]
     }
   },
-  "last_updated": "2025-02-16T16:45:02.627401"
+  "last_updated": "2025-02-17T02:25:48.514147"
 }
