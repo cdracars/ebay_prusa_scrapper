@@ -191,9 +191,9 @@ def parse_listing(item: BeautifulSoup) -> Optional[Dict[str, Any]]:
         auction_type = detect_auction_type(item)
 
         # Get auction time information if applicable
-        auction_time = None
+        auction_time_data = None
         if auction_type in ["Auction", "Hybrid"]:
-            auction_time = parse_auction_time(item)
+            auction_time_data = parse_auction_time(item)
 
         # Create listing data
         listing = Listing(
@@ -209,16 +209,14 @@ def parse_listing(item: BeautifulSoup) -> Optional[Dict[str, Any]]:
             link=link,
             category=category,
             model=model,
-            auction_type=auction_type
+            auction_type=auction_type,
+            time_remaining=auction_time_data['time_remaining'] if auction_time_data else None,
+            seconds_remaining=auction_time_data['seconds_remaining'] if auction_time_data else None,
+            end_time=auction_time_data['end_time'] if auction_time_data else None
         )
 
         # Calculate price comparisons
         listing.calculate_price_comparison()
-
-        # Convert to dictionary and add auction time if exists
-        listing_dict = listing.to_dict()
-        if auction_time:
-            listing_dict['auction_time'] = auction_time
 
         return listing.to_dict()
 

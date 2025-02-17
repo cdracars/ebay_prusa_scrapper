@@ -20,12 +20,20 @@ class Listing:
     category: str
     model: str
     auction_type: str = "Buy It Now"  # Default to Buy It Now, with options like "Auction", "Hybrid"
+    time_remaining: Optional[str] = None
+    seconds_remaining: Optional[int] = None
+    end_time: Optional[str] = None
 
 
     @classmethod
     def from_dict(cls, data: dict) -> 'Listing':
-        """Create a Listing instance from a dictionary"""
-        return cls(**data)
+              """Create a Listing instance from a dictionary"""
+              auction_data = data.pop('auction_time', None)
+              if auction_data:
+                  data['time_remaining'] = auction_data.get('time_remaining')
+                  data['seconds_remaining'] = auction_data.get('seconds_remaining')
+                  data['end_time'] = auction_data.get('end_time')
+              return cls(**data)
 
     def to_dict(self) -> dict:
         """Convert listing to dictionary format"""
@@ -42,7 +50,10 @@ class Listing:
             "link": self.link,
             "category": self.category,
             "model": self.model,
-            "auction_type": self.auction_type
+            "auction_type": self.auction_type,
+            "time_remaining": self.time_remaining,
+            "seconds_remaining": self.seconds_remaining,
+            "end_time": self.end_time
         }
 
     def calculate_price_comparison(self) -> None:

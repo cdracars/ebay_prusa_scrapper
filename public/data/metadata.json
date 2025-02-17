@@ -9,5 +9,9 @@
       ]
     }
   },
+<<<<<<< HEAD
   "last_updated": "2025-02-17T02:25:48.514147"
+=======
+  "last_updated": "2025-02-16T20:32:57.472322"
+>>>>>>> f41d897 (Update auction data handling and add new TypedDicts for auction information)
 }

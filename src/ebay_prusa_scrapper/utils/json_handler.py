@@ -1,12 +1,61 @@
 # src/ebay_prusa_scrapper/utils/json_handler.py
-"""JSON handling utilities"""
-import json
-from typing import List, Dict, Any
+"""JSON handling utilities with improved organization and typing"""
+from dataclasses import dataclass
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 
 from ..config.constants import OFFICIAL_PRICES, UPGRADE_MAX_PRICE
 from ..models.listing import Listing
-from ..models.types import ModelStats, UnknownModelStats
+from ..models.types import (
+    ModelStats, UnknownModelStats, AuctionInfo,
+    PrinterCategory, UpgradeCategory
+)
+
+# Constants
+ENDING_SOON_THRESHOLD = 3600  # 1 hour in seconds
+UPGRADE_KEYWORDS = [
+    "hotend", "frame", "nozzle", "extruder", "sheet",
+    "bondtech", "bear", "pinda"
+]
+PRINTER_MODELS = ["MK3S", "MK4", "MINI", "CORE"]
+CATEGORIES = ["printer", "upgrade"]
+
+@dataclass
+class PricingAccumulator:
+    """Track price statistics with proper typing"""
+    total_price: float = 0.0
+    valid_count: int = 0
+
+    def add_price(self, price: float) -> None:
+        """Add a valid price to the accumulator"""
+        self.total_price += price
+        self.valid_count += 1
+
+    def get_average(self) -> Optional[float]:
+        """Calculate the average if there are valid prices"""
+        if self.valid_count == 0:
+            return None
+        return round(self.total_price / self.valid_count, 2)
+
+@dataclass
+class AuctionAccumulator:
+    """Track auction statistics"""
+    total_bids: float = 0.0
+    count: int = 0
+    ending_soon: int = 0
+
+    def add_auction(self, current_bid: float, seconds_remaining: int) -> None:
+        """Add auction data to accumulator"""
+        self.total_bids += current_bid
+        self.count += 1
+        if seconds_remaining < ENDING_SOON_THRESHOLD:
+            self.ending_soon += 1
+
+    def get_average_bid(self) -> Optional[float]:
+        """Calculate average bid if there are auctions"""
+        if self.count == 0:
+            return None
+        return round(self.total_bids / self.count, 2)
 
 def create_model_stats() -> ModelStats:
     """Create model statistics with proper initialization"""
@@ -20,44 +69,27 @@ def create_model_stats() -> ModelStats:
         "listings_with_shipping": 0
     }
 
-def write_batch_to_file(batch: List[Dict[str, Any]], filename: str, is_first: bool):
-    """Write a batch of listings to a JSON file with proper formatting"""
-    mode = 'w' if is_first else 'a'
-    with open(filename, mode, encoding='utf-8') as f:
-        if is_first:
-            # Start the JSON array directly
-            f.write('{\n"listings": [\n')
-
-        # Write batch with proper JSON formatting
-        json_str = json.dumps(batch, indent=2)
-        if not is_first:
-            f.write(',\n')
-        # Remove the outer array brackets since we're building the array incrementally
-        json_str = json_str[1:-1].strip()
-        f.write(json_str)
-
 def create_unknown_stats() -> UnknownModelStats:
     """Create statistics for unknown model"""
     return {"count": 0}
 
-def create_summary_json(listings: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Create a condensed summary with improved accuracy"""
-    summary = {
+def initialize_data_structure() -> Dict[str, Any]:
+    """Initialize the complete data structure with proper typing"""
+    return {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "total_listings": len(listings),
-        "models": {
-            "MK3S": create_model_stats(),
-            "MK4": create_model_stats(),
-            "MINI": create_model_stats(),
-            "CORE": create_model_stats(),
-            "Unknown": create_unknown_stats()
-        },
+        "total_listings": 0,
+        "models": {model: create_model_stats() for model in PRINTER_MODELS} |
+                 {"Unknown": create_unknown_stats()},
         "categories": {
             "printer": {
                 "count": 0,
                 "avg_price": 0,
                 "listings_with_shipping": 0,
-                "listings_below_msrp": 0
+                "listings_below_msrp": 0,
+                "auctions": {
+                    "active": [],
+                    "ending_soon": []
+                }
             },
             "upgrade": {
                 "count": 0,
@@ -66,115 +98,181 @@ def create_summary_json(listings: List[Dict[str, Any]]) -> Dict[str, Any]:
                 "price_range": {
                     "min": float('inf'),
                     "max": float('-inf')
+                },
+                "auctions": {
+                    "active": [],
+                    "ending_soon": []
                 }
             }
         },
-        # New section for auction type tracking
         "auction_types": {
             "Buy It Now": 0,
             "Auction": 0,
             "Hybrid": 0
+        },
+        "active_auctions": {
+            "count": 0,
+            "ending_soon": 0,
+            "avg_current_bid": 0.0
         }
     }
 
-    total_printer_price = 0
-    total_upgrade_price = 0
-    valid_printer_prices = 0
-    valid_upgrade_prices = 0
+def process_auction_data(
+    listing_dict: Dict[str, Any],
+    listing: Listing,
+    data: Dict[str, Any],
+    auction_stats: AuctionAccumulator
+) -> None:
+    """Process auction-specific data"""
+    auction_type = listing_dict.get('auction_type', 'Buy It Now')
+    data["auction_types"][auction_type] += 1
 
-    for listing_dict in listings:
-        listing = Listing.from_dict(listing_dict)
-        category = listing.category
-        model = listing.model
-        price = listing.price
-        total_cost = listing.total_cost
+    if auction_type in ["Auction", "Hybrid"]:
+        # Use the flattened fields instead of nested auction_time
+        if listing.seconds_remaining is not None:
+            auction_stats.add_auction(listing.price, listing.seconds_remaining)
 
-        auction_type = listing_dict.get('auction_type', 'Buy It Now')
-        summary["auction_types"][auction_type] += 1
+            auction_info: AuctionInfo = {
+                "title": listing.title,
+                "current_bid": listing.price,
+                "time_remaining": listing.time_remaining,
+                "end_time": listing.end_time,
+                "link": listing.link,
+                "model": listing.model
+            }
 
-        if category == "printer":
-            summary["categories"]["printer"]["count"] += 1
-
-            if isinstance(price, (int, float)) and price > 0:
-                if model != "Unknown" and listing.is_valid_price():
-                    total_printer_price += price
-                    valid_printer_prices += 1
-
-            if listing.has_shipping_info():
-                summary["categories"]["printer"]["listings_with_shipping"] += 1
-
-            model_info = summary["models"][model]
-            if model != "Unknown":
-                model_info["count"] += 1
-                model_info = model_info  # type: ModelStats  # Tell mypy this is ModelStats
-
-                # Track shipping at model level
-                if listing.has_shipping_info():
-                    model_info["listings_with_shipping"] += 1
-
-                # Only update price range if total cost is valid for the model
-                if isinstance(total_cost, (int, float)) and total_cost > 0:
-                    if listing.is_valid_price():
-                        model_info["price_range"]["min"] = min(model_info["price_range"]["min"], total_cost)
-                        model_info["price_range"]["max"] = max(model_info["price_range"]["max"], total_cost)
-
-                if (isinstance(listing.price_vs_official, (int, float)) and
-                    listing.price_vs_official < 0 and
-                    model in OFFICIAL_PRICES and
-                    listing.is_valid_price()):
-                    model_info["below_msrp"] += 1
-                    summary["categories"]["printer"]["listings_below_msrp"] += 1
+            category_auctions = data["categories"][listing.category]["auctions"]
+            if listing.seconds_remaining < ENDING_SOON_THRESHOLD:
+                category_auctions["ending_soon"].append(auction_info)
             else:
-                # Handle Unknown model case
-                model_info["count"] += 1  # type: UnknownModelStats
+                category_auctions["active"].append(auction_info)
 
-        else:  # upgrade
-            summary["categories"]["upgrade"]["count"] += 1
+def update_price_range(
+    price_range: Dict[str, float],
+    value: float
+) -> None:
+    """Update a price range with a new value"""
+    price_range["min"] = min(price_range["min"], value)
+    price_range["max"] = max(price_range["max"], value)
 
-            # Validate upgrade prices
-            if isinstance(price, (int, float)) and 0 < price <= UPGRADE_MAX_PRICE:
-                total_upgrade_price += price
-                valid_upgrade_prices += 1
-                summary["categories"]["upgrade"]["price_range"]["min"] = min(
-                    summary["categories"]["upgrade"]["price_range"]["min"],
-                    price
-                )
-                summary["categories"]["upgrade"]["price_range"]["max"] = max(
-                    summary["categories"]["upgrade"]["price_range"]["max"],
-                    price
-                )
+def process_printer_data(
+    listing: Listing,
+    data: Dict[str, Any],
+    model_info: Dict[str, Any],
+    printer_prices: PricingAccumulator
+) -> None:
+    """Process printer-specific data"""
+    if isinstance(listing.price, (int, float)) and listing.price > 0:
+        if listing.model != "Unknown" and listing.is_valid_price():
+            printer_prices.add_price(listing.price)
 
-            # Track upgrade types
-            title_lower = listing.title.lower()
-            for keyword in ["hotend", "frame", "nozzle", "extruder", "sheet", "bondtech", "bear", "pinda"]:
-                if keyword in title_lower:
-                    summary["categories"]["upgrade"]["popular_types"][keyword] = \
-                        summary["categories"]["upgrade"]["popular_types"].get(keyword, 0) + 1
+    if listing.has_shipping_info():
+        data["categories"]["printer"]["listings_with_shipping"] += 1
+        if listing.model != "Unknown":
+            model_info["listings_with_shipping"] += 1
 
-    # Calculate averages using only valid prices
-    if valid_printer_prices > 0:
-        summary["categories"]["printer"]["avg_price"] = round(total_printer_price / valid_printer_prices, 2)
+    if listing.model != "Unknown":
+        if isinstance(listing.total_cost, (int, float)) and listing.total_cost > 0:
+            if listing.is_valid_price():
+                update_price_range(model_info["price_range"], listing.total_cost)
 
-    if valid_upgrade_prices > 0:
-        summary["categories"]["upgrade"]["avg_price"] = round(total_upgrade_price / valid_upgrade_prices, 2)
+        if (isinstance(listing.price_vs_official, (int, float)) and
+            listing.price_vs_official < 0 and
+            listing.model in OFFICIAL_PRICES and
+            listing.is_valid_price()):
+            model_info["below_msrp"] += 1
+            data["categories"]["printer"]["listings_below_msrp"] += 1
+
+def process_upgrade_data(
+    listing: Listing,
+    data: Dict[str, Any],
+    upgrade_prices: PricingAccumulator
+) -> None:
+    """Process upgrade-specific data"""
+    if isinstance(listing.price, (int, float)) and 0 < listing.price <= UPGRADE_MAX_PRICE:
+        upgrade_prices.add_price(listing.price)
+        update_price_range(
+            data["categories"]["upgrade"]["price_range"],
+            listing.price
+        )
+
+    # Track upgrade types
+    title_lower = listing.title.lower()
+    for keyword in UPGRADE_KEYWORDS:
+        if keyword in title_lower:
+            data["categories"]["upgrade"]["popular_types"][keyword] = \
+                data["categories"]["upgrade"]["popular_types"].get(keyword, 0) + 1
+
+def finalize_data(
+    data: Dict[str, Any],
+    printer_prices: PricingAccumulator,
+    upgrade_prices: PricingAccumulator,
+    auction_stats: AuctionAccumulator
+) -> None:
+    """Finalize data structure with calculated values"""
+    # Update auction statistics
+    data["active_auctions"].update({
+        "count": auction_stats.count,
+        "ending_soon": auction_stats.ending_soon,
+        "avg_current_bid": auction_stats.get_average_bid() or 0.0
+    })
+
+    # Update category averages
+    data["categories"]["printer"]["avg_price"] = printer_prices.get_average() or 0.0
+    if upgrade_avg := upgrade_prices.get_average():
+        data["categories"]["upgrade"]["avg_price"] = upgrade_avg
     else:
-        summary["categories"]["upgrade"]["price_range"] = None
+        data["categories"]["upgrade"]["price_range"] = None
 
-    # Clean up price ranges that have no data
-    for model in ["MK3S", "MK4", "MINI", "CORE"]:
-        model_info = summary["models"][model]  # type: ModelStats
+    # Clean up price ranges
+    for model in PRINTER_MODELS:
+        model_info = data["models"][model]
         price_range = model_info["price_range"]
         if price_range["min"] == float('inf') or price_range["max"] == float('-inf'):
             model_info["price_range"] = None
 
-    # Sort popular upgrade types by frequency
-    if summary["categories"]["upgrade"]["popular_types"]:
-        summary["categories"]["upgrade"]["popular_types"] = dict(
+    # Sort auctions by end time
+    for category in CATEGORIES:
+        for auction_type in ["active", "ending_soon"]:
+            data["categories"][category]["auctions"][auction_type].sort(
+                key=lambda x: x["end_time"]
+            )
+
+    # Sort upgrade types by frequency
+    if data["categories"]["upgrade"]["popular_types"]:
+        data["categories"]["upgrade"]["popular_types"] = dict(
             sorted(
-                summary["categories"]["upgrade"]["popular_types"].items(),
+                data["categories"]["upgrade"]["popular_types"].items(),
                 key=lambda x: x[1],
                 reverse=True
             )
         )
 
-    return summary
+def organize_listing_data(listings: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Organize eBay listing data with detailed auction tracking and statistics"""
+    data = initialize_data_structure()
+    data["total_listings"] = len(listings)
+
+    printer_prices = PricingAccumulator()
+    upgrade_prices = PricingAccumulator()
+    auction_stats = AuctionAccumulator()
+
+    for listing_dict in listings:
+        listing = Listing.from_dict(listing_dict)
+        data["categories"][listing.category]["count"] += 1
+
+        # Process auction data
+        process_auction_data(listing_dict, listing, data, auction_stats)
+
+        # Update model counts
+        model_info = data["models"][listing.model]
+        model_info["count"] += 1
+
+        # Process category-specific data
+        if listing.category == "printer":
+            process_printer_data(listing, data, model_info, printer_prices)
+        else:
+            process_upgrade_data(listing, data, upgrade_prices)
+
+    finalize_data(data, printer_prices, upgrade_prices, auction_stats)
+    return data
