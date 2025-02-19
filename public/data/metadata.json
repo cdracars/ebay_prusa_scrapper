@@ -3,9 +3,10 @@
     "2025": {
       "02": [
         "historical/2025/02/listings_20250217.json",
-        "historical/2025/02/listings_20250218.json"
+        "historical/2025/02/listings_20250218.json",
+        "historical/2025/02/listings_20250219.json"
       ]
     }
   },
-  "last_updated": "2025-02-18T02:23:13.389113"
+  "last_updated": "2025-02-19T02:24:20.448236"
 }
