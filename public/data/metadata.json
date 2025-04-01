@@ -47,8 +47,11 @@
         "historical/2025/03/listings_20250329.json",
         "historical/2025/03/listings_20250330.json",
         "historical/2025/03/listings_20250331.json"
+      ],
+      "04": [
+        "historical/2025/04/listings_20250401.json"
       ]
     }
   },
-  "last_updated": "2025-03-31T02:30:27.019664"
+  "last_updated": "2025-04-01T02:32:13.404844"
 }
