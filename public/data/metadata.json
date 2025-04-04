@@ -51,9 +51,10 @@
       "04": [
         "historical/2025/04/listings_20250401.json",
         "historical/2025/04/listings_20250402.json",
-        "historical/2025/04/listings_20250403.json"
+        "historical/2025/04/listings_20250403.json",
+        "historical/2025/04/listings_20250404.json"
       ]
     }
   },
-  "last_updated": "2025-04-03T02:28:43.896811"
+  "last_updated": "2025-04-04T02:28:33.522364"
 }
