@@ -116,9 +116,10 @@
       "06": [
         "historical/2025/06/listings_20250601.json",
         "historical/2025/06/listings_20250602.json",
-        "historical/2025/06/listings_20250603.json"
+        "historical/2025/06/listings_20250603.json",
+        "historical/2025/06/listings_20250604.json"
       ]
     }
   },
-  "last_updated": "2025-06-03T02:34:47.422890"
+  "last_updated": "2025-06-04T02:34:42.078525"
 }
