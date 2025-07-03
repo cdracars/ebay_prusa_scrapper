@@ -147,9 +147,10 @@
       ],
       "07": [
         "historical/2025/07/listings_20250701.json",
-        "historical/2025/07/listings_20250702.json"
+        "historical/2025/07/listings_20250702.json",
+        "historical/2025/07/listings_20250703.json"
       ]
     }
   },
-  "last_updated": "2025-07-02T02:33:46.050437"
+  "last_updated": "2025-07-03T02:34:23.220097"
 }
