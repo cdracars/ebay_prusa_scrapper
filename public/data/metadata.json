@@ -179,9 +179,10 @@
         "historical/2025/07/listings_20250731.json"
       ],
       "08": [
-        "historical/2025/08/listings_20250801.json"
+        "historical/2025/08/listings_20250801.json",
+        "historical/2025/08/listings_20250802.json"
       ]
     }
   },
-  "last_updated": "2025-08-01T02:48:34.030146"
+  "last_updated": "2025-08-02T02:36:49.440867"
 }
