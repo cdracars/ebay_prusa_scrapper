@@ -275,8 +275,11 @@
         "historical/2025/10/listings_20251029.json",
         "historical/2025/10/listings_20251030.json",
         "historical/2025/10/listings_20251031.json"
+      ],
+      "11": [
+        "historical/2025/11/listings_20251101.json"
       ]
     }
   },
-  "last_updated": "2025-10-31T02:30:46.981510"
+  "last_updated": "2025-11-01T02:31:22.353682"
 }
