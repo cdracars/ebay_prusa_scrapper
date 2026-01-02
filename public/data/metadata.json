@@ -344,9 +344,10 @@
     },
     "2026": {
       "01": [
-        "historical/2026/01/listings_20260101.json"
+        "historical/2026/01/listings_20260101.json",
+        "historical/2026/01/listings_20260102.json"
       ]
     }
   },
-  "last_updated": "2026-01-01T02:44:41.564270"
+  "last_updated": "2026-01-02T02:37:48.820421"
 }
