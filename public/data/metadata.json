@@ -405,8 +405,11 @@
         "historical/2026/02/listings_20260226.json",
         "historical/2026/02/listings_20260227.json",
         "historical/2026/02/listings_20260228.json"
+      ],
+      "03": [
+        "historical/2026/03/listings_20260301.json"
       ]
     }
   },
-  "last_updated": "2026-02-28T02:45:15.198781"
+  "last_updated": "2026-03-01T03:00:07.197446"
 }
