@@ -474,9 +474,10 @@
       "05": [
         "historical/2026/05/listings_20260501.json",
         "historical/2026/05/listings_20260502.json",
-        "historical/2026/05/listings_20260503.json"
+        "historical/2026/05/listings_20260503.json",
+        "historical/2026/05/listings_20260504.json"
       ]
     }
   },
-  "last_updated": "2026-05-03T03:01:59.114926"
+  "last_updated": "2026-05-04T03:02:02.173743"
 }
