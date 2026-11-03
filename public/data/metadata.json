@@ -669,9 +669,10 @@
       ],
       "11": [
         "historical/2026/11/listings_20261101.json",
-        "historical/2026/11/listings_20261102.json"
+        "historical/2026/11/listings_20261102.json",
+        "historical/2026/11/listings_20261103.json"
       ]
     }
   },
-  "last_updated": "2026-11-02T02:03:39.128677"
+  "last_updated": "2026-11-03T02:03:58.636339"
 }
